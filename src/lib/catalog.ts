@@ -50,6 +50,7 @@ export const catalog: CatalogItem[] = [
     apiProvider: "estat",
     apiAvailable: false,
     sourceUrl: "https://www.e-stat.go.jp/",
+    note: "統計調査コード00450011。COLLECT_AREA上は市区町村表が存在するが、実データで検証したところ小規模市町村では値が返らない表が多く、信頼できる絞り込みキーワードを確定できなかったため見送り",
   },
   {
     id: "resident-registry-migration",
@@ -61,6 +62,7 @@ export const catalog: CatalogItem[] = [
     apiProvider: "estat",
     apiAvailable: false,
     sourceUrl: "https://www.e-stat.go.jp/",
+    note: "統計調査コード00200523。e-Stat上の表はすべてCOLLECT_AREA「該当なし」で、市区町村・都道府県単位のデータが存在しないため対象外（実データで確認済み）",
   },
   {
     id: "population-projection",
@@ -84,7 +86,9 @@ export const catalog: CatalogItem[] = [
     publisher: "総務省・経済産業省",
     frequency: "5年ごと",
     apiProvider: "estat",
-    apiAvailable: false,
+    apiAvailable: true,
+    estatStatsCode: "00200552",
+    estatTitleKeyword: "民営事業所数及び従業者数",
     sourceUrl: "https://www.e-stat.go.jp/",
   },
   {
@@ -110,6 +114,7 @@ export const catalog: CatalogItem[] = [
     frequency: "年次*",
     apiProvider: "estat",
     apiAvailable: false,
+    note: "統計調査コード00550010。市区町村単位の表は2020年分を最後に更新が止まっており（2021年以降は経済センサス-活動調査に統合）、かつ地域が@areaでなく別軸（@cat03）で表現される特殊な構造のため対象外",
   },
   {
     id: "economic-structure-survey",
@@ -120,6 +125,7 @@ export const catalog: CatalogItem[] = [
     frequency: "年次*",
     apiProvider: "estat",
     apiAvailable: false,
+    note: "統計調査コード00200555。市区町村単位の表はあるが、cdAreaで絞り込んでも地域を問わず全件返ってしまう構造（地域が別軸で表現されている）ため、現行の実装方式では正しく取得できず対象外",
   },
   {
     id: "agriculture-forestry-census",
@@ -130,6 +136,7 @@ export const catalog: CatalogItem[] = [
     frequency: "5年ごと",
     apiProvider: "estat",
     apiAvailable: false,
+    note: "統計調査コード00500209。e-Stat上のデータは全国・都道府県単位のみで、市区町村単位の値が存在しないため対象外（実データで確認済み）",
   },
   {
     id: "fishery-census",
@@ -139,6 +146,7 @@ export const catalog: CatalogItem[] = [
     frequency: "5年ごと",
     apiProvider: "estat",
     apiAvailable: false,
+    note: "統計調査コード00500210。市区町村単位の表は存在するが最新でも2003年で更新が止まっており、内陸市町村では値が存在しないため実用性が低いと判断し見送り",
   },
   {
     id: "commerce-dynamic-statistics",
@@ -148,6 +156,7 @@ export const catalog: CatalogItem[] = [
     frequency: "月次",
     apiProvider: "estat",
     apiAvailable: false,
+    note: "統計調査コード00550030。e-Stat上のデータは全国・都道府県単位のみで、市区町村単位の値が存在しないため対象外（実データで確認済み）",
   },
   {
     id: "mining-industrial-index",
@@ -157,6 +166,7 @@ export const catalog: CatalogItem[] = [
     frequency: "月次",
     apiProvider: "estat",
     apiAvailable: false,
+    note: "e-Stat検索で該当統計表が見つからなかったため対象外（実データで確認済み）",
   },
   {
     id: "zoning-status",
@@ -179,6 +189,7 @@ export const catalog: CatalogItem[] = [
     frequency: "月次",
     apiProvider: "estat",
     apiAvailable: false,
+    note: "統計調査コード00200561。e-Stat上の表はすべてCOLLECT_AREA「該当なし」で、地域別の値が存在しないため対象外（実データで確認済み）",
   },
   {
     id: "national-survey-family-income",
@@ -188,6 +199,7 @@ export const catalog: CatalogItem[] = [
     frequency: "5年ごと",
     apiProvider: "estat",
     apiAvailable: false,
+    note: "統計調査コード00200564。e-Stat上のデータは全国・都道府県単位のみで、市区町村単位の値が存在しないため対象外（実データで確認済み）",
   },
   {
     id: "employment-status-survey",
@@ -197,6 +209,7 @@ export const catalog: CatalogItem[] = [
     frequency: "5年ごと",
     apiProvider: "estat",
     apiAvailable: false,
+    note: "統計調査コード00200532。市区町村単位の表はあるが、実際の集計対象は政令指定都市・県庁所在都市・人口30万人以上の市に限られ、佐久穂町のような小規模市町村は値が存在しないことを実データで確認",
   },
   {
     id: "wage-structure-survey",
@@ -206,6 +219,7 @@ export const catalog: CatalogItem[] = [
     frequency: "年次",
     apiProvider: "estat",
     apiAvailable: false,
+    note: "統計調査コード00450091。e-Stat上のデータは全国・都道府県単位のみで、市区町村単位の値が存在しないため対象外（実データで確認済み）",
   },
   {
     id: "labour-force-survey",
@@ -226,6 +240,7 @@ export const catalog: CatalogItem[] = [
     frequency: "月次",
     apiProvider: "estat",
     apiAvailable: false,
+    note: "e-Stat検索で該当統計表が見つからなかったため対象外（実データで確認済み）",
   },
   {
     id: "monthly-labour-survey",
@@ -235,6 +250,7 @@ export const catalog: CatalogItem[] = [
     frequency: "月次",
     apiProvider: "estat",
     apiAvailable: false,
+    note: "統計調査コード00450071。e-Stat上の表はすべてCOLLECT_AREA「該当なし」で、地域別の値が存在しないため対象外（実データで確認済み）",
   },
 
   // ── 物価・地価 ──────────────────────────────────────
@@ -275,6 +291,7 @@ export const catalog: CatalogItem[] = [
     frequency: "年次",
     apiProvider: "estat",
     apiAvailable: false,
+    note: "消費者物価指数と同様、都道府県庁所在市等の代表都市のみが対象で市区町村コードでの一括取得ができないため対象外",
   },
   {
     id: "land-price-publication",
@@ -339,6 +356,7 @@ export const catalog: CatalogItem[] = [
     frequency: "年次 / 5年ごと",
     apiProvider: "estat",
     apiAvailable: false,
+    note: "統計調査コード00200603。e-Stat上の表はすべてCOLLECT_AREA「該当なし」で、地域別の値が存在しないため対象外（実データで確認済み）",
   },
 
   // ── 土地利用 ────────────────────────────────────────
