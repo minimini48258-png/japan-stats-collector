@@ -1,0 +1,10 @@
+name = "stats-collector-proxy"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+
+# REINFOLIB_API_KEY はシークレットとして登録する（リポジトリには含めない）:
+#   wrangler secret put REINFOLIB_API_KEY
+#
+# ALLOWED_ORIGIN は本番公開先のオリジンに合わせて変更する
+[vars]
+ALLOWED_ORIGIN = "https://chips.jp"

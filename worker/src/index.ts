@@ -1,0 +1,94 @@
+// 統計データ収集ツール用の薄いプロキシ。
+// 不動産情報ライブラリAPI（地価公示・地価調査）とGSI住所検索APIは
+// ブラウザから直接呼べない（CORS非対応、または不動産情報ライブラリはAPIキーをサーバー側でしか使えない）ため、
+// このWorkerが唯一のサーバーサイド処理としてそれらを中継する。
+
+export interface Env {
+  REINFOLIB_API_KEY: string;
+  ALLOWED_ORIGIN: string;
+}
+
+const DEV_ORIGINS = ["http://localhost:3411", "http://localhost:3000"];
+
+function corsHeaders(env: Env, origin: string | null): HeadersInit {
+  const allowed = origin && (origin === env.ALLOWED_ORIGIN || DEV_ORIGINS.includes(origin))
+    ? origin
+    : env.ALLOWED_ORIGIN;
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+}
+
+async function handleGsiAddressSearch(url: URL, headers: HeadersInit): Promise<Response> {
+  const q = url.searchParams.get("q");
+  if (!q) {
+    return new Response(JSON.stringify({ error: "q パラメータが必要です" }), {
+      status: 400,
+      headers: { ...headers, "Content-Type": "application/json" },
+    });
+  }
+  const upstream = new URL("https://msearch.gsi.go.jp/address-search/AddressSearch");
+  upstream.searchParams.set("q", q);
+  const res = await fetch(upstream.toString());
+  const body = await res.text();
+  return new Response(body, {
+    status: res.status,
+    headers: { ...headers, "Content-Type": "application/json" },
+  });
+}
+
+async function handleReinfolibLandPrice(url: URL, env: Env, headers: HeadersInit): Promise<Response> {
+  const required = ["z", "x", "y", "year"];
+  for (const key of required) {
+    if (!url.searchParams.get(key)) {
+      return new Response(JSON.stringify({ error: `${key} パラメータが必要です` }), {
+        status: 400,
+        headers: { ...headers, "Content-Type": "application/json" },
+      });
+    }
+  }
+
+  const upstream = new URL("https://www.reinfolib.mlit.go.jp/ex-api/external/XPT002");
+  upstream.searchParams.set("response_format", "geojson");
+  for (const key of ["z", "x", "y", "year", "priceClassification", "useCategoryCode"]) {
+    const value = url.searchParams.get(key);
+    if (value) upstream.searchParams.set(key, value);
+  }
+
+  const res = await fetch(upstream.toString(), {
+    headers: { "Ocp-Apim-Subscription-Key": env.REINFOLIB_API_KEY },
+  });
+  const body = await res.text();
+  return new Response(body, {
+    status: res.status,
+    headers: { ...headers, "Content-Type": "application/json" },
+  });
+}
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+    const origin = request.headers.get("Origin");
+    const headers = corsHeaders(env, origin);
+
+    if (request.method === "OPTIONS") {
+      return new Response(null, { headers });
+    }
+
+    if (request.method !== "GET") {
+      return new Response("Method Not Allowed", { status: 405, headers });
+    }
+
+    if (url.pathname === "/gsi/address-search") {
+      return handleGsiAddressSearch(url, headers);
+    }
+
+    if (url.pathname === "/reinfolib/land-price") {
+      return handleReinfolibLandPrice(url, env, headers);
+    }
+
+    return new Response("Not Found", { status: 404, headers });
+  },
+};
