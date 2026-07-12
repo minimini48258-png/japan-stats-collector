@@ -59,6 +59,58 @@ async function geocode(query: string): Promise<{ lon: number; lat: number } | nu
 }
 
 /**
+ * 区域区分・用途地域・災害危険区域・避難場所・学校・医療機関等、
+ * 不動産情報ライブラリのXKT/XGT系タイルAPI（z/x/y+response_format共通形式）を汎用的に取得する。
+ * これらのAPIはレイヤーごとにproperties名の構造がバラバラ（例: 地価は city_county_name_ja で
+ * 市区町村を特定できるが、災害危険区域は都道府県コードしか持たない等）なため、
+ * 個別の市区町村名フィルタは行わず、代表地点を中心とした3x3タイル（ズーム14, 概ね7km四方）の
+ * 範囲に含まれる features をそのままCSV化する設計にしている。
+ */
+export async function fetchGisLayer(
+  endpointCode: string,
+  prefectureName: string,
+  cityName: string
+): Promise<Record<string, unknown>[]> {
+  const center = await geocode(`${prefectureName}${cityName}`);
+  if (!center) {
+    throw new Error(`「${prefectureName}${cityName}」の位置情報を取得できませんでした`);
+  }
+  const centerTile = lonLatToTile(center.lon, center.lat, ZOOM);
+
+  const seen = new Set<string>();
+  const rows: Record<string, unknown>[] = [];
+
+  for (let dx = -TILE_RADIUS; dx <= TILE_RADIUS; dx++) {
+    for (let dy = -TILE_RADIUS; dy <= TILE_RADIUS; dy++) {
+      const x = centerTile.x + dx;
+      const y = centerTile.y + dy;
+      const params = new URLSearchParams({
+        endpoint: endpointCode,
+        z: String(ZOOM),
+        x: String(x),
+        y: String(y),
+      });
+      const res = await fetch(`${getProxyBase()}/reinfolib/gis?${params.toString()}`);
+      if (!res.ok) {
+        throw new Error(`不動産情報ライブラリAPI（プロキシ経由）に失敗しました（HTTP ${res.status}）`);
+      }
+      const json = await res.json();
+      const features: unknown[] = Array.isArray(json?.features) ? json.features : [];
+      for (const raw of features) {
+        const f = raw as { properties?: Record<string, unknown> };
+        const p = f.properties ?? {};
+        const key = JSON.stringify(p);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        rows.push(p);
+      }
+    }
+  }
+
+  return rows;
+}
+
+/**
  * 地価公示・都道府県地価調査データを取得する。
  * `priceClassification` は "0"=地価公示のみ, "1"=都道府県地価調査のみ。
  */

@@ -76,7 +76,10 @@ export default function CategoryTree({ selection, onToggle, onYearChange }: Prop
                       <div className="ml-6 mt-2 flex items-center gap-2 text-sm">
                         {state.loading && <span className="text-gray-400">年度を確認中…</span>}
                         {state.error && <span className="text-red-500">{state.error}</span>}
-                        {!state.loading && !state.error && (
+                        {!state.loading && !state.error && item.reinfolibGisEndpoint && (
+                          <span className="text-green-600">取得可能（現況データ）</span>
+                        )}
+                        {!state.loading && !state.error && !item.reinfolibGisEndpoint && (
                           <>
                             <span className="text-gray-600">年度:</span>
                             <select

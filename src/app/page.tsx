@@ -7,7 +7,7 @@ import DownloadButton from "@/components/DownloadButton";
 import { catalog, CatalogItem } from "@/lib/catalog";
 import { getMunicipalities, getPrefectures, prefAreaCode } from "@/lib/areas";
 import { searchStatsTables, fetchStatsData, StatsTable } from "@/lib/estat";
-import { fetchLandPrice } from "@/lib/reinfolib";
+import { fetchLandPrice, fetchGisLayer } from "@/lib/reinfolib";
 import { toCsv, downloadFiles, DownloadFile } from "@/lib/download";
 
 // XPT002（地価公示・地価調査）が対応する年は1995〜2024年
@@ -77,10 +77,20 @@ export default function Home() {
 
     if (!willCheck || !areaCode) return;
 
-    if (item.apiProvider === "reinfolib") {
+    if (item.apiProvider === "reinfolib" && item.reinfolibPriceClassification) {
       setSelection((prev) => ({
         ...prev,
         [item.id]: { ...prev[item.id], loading: false, yearOptions: reinfolibYearOptions() },
+      }));
+      return;
+    }
+
+    if (item.apiProvider === "reinfolib" && item.reinfolibGisEndpoint) {
+      // GISレイヤー系は年度の概念がない（現況のスナップショット）ため、
+      // 年度選択をスキップしてすぐダウンロード可能な状態にする
+      setSelection((prev) => ({
+        ...prev,
+        [item.id]: { ...prev[item.id], loading: false, selectedYear: "latest" },
       }));
       return;
     }
@@ -129,6 +139,12 @@ export default function Home() {
           files.push({
             filename: `${item.itemName}_${areaLabel}.csv`,
             csv: toCsv(rows as unknown as Record<string, unknown>[]),
+          });
+        } else if (item.apiProvider === "reinfolib" && item.reinfolibGisEndpoint) {
+          const rows = await fetchGisLayer(item.reinfolibGisEndpoint, prefName, muniName);
+          files.push({
+            filename: `${item.itemName}_${areaLabel}.csv`,
+            csv: toCsv(rows),
           });
         } else if (item.apiProvider === "reinfolib") {
           const rows = await fetchLandPrice(
