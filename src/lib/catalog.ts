@@ -14,8 +14,10 @@ export interface CatalogItem {
   apiProvider: ApiProvider;
   /** MVPで実際にダウンロード可能なら true。false は「データなし・情報源のみ」表示 */
   apiAvailable: boolean;
-  /** e-Stat 統計表ID（政府統計コード）。確定後に埋める */
+  /** e-Stat 統計調査コード（STAT_NAME @code）。getStatsListの絞り込みに使う */
   estatStatsCode?: string;
+  /** 統計表タイトルをさらに絞り込むキーワード（部分一致） */
+  estatTitleKeyword?: string;
   /** 不動産情報ライブラリ（XPT002）の地価情報区分。0=地価公示のみ, 1=都道府県地価調査のみ */
   reinfolibPriceClassification?: "0" | "1";
   sourceUrl?: string;
@@ -33,6 +35,8 @@ export const catalog: CatalogItem[] = [
     frequency: "5年ごと",
     apiProvider: "estat",
     apiAvailable: true,
+    estatStatsCode: "00200521",
+    estatTitleKeyword: "男女別人口",
     sourceUrl: "https://www.e-stat.go.jp/",
     note: "人口規模・人口増減・昼間人口・通勤通学移動・住宅の所有関係別/建て方別世帯数・産業/職業分類別就業者数の元データ",
   },
@@ -92,6 +96,8 @@ export const catalog: CatalogItem[] = [
     frequency: "年次*",
     apiProvider: "estat",
     apiAvailable: true,
+    estatStatsCode: "00200553",
+    estatTitleKeyword: "全事業所数",
     sourceUrl: "https://www.e-stat.go.jp/",
     note: "*経済センサス実施年は経済センサスで調査し、製造業分を集計",
   },
@@ -208,8 +214,9 @@ export const catalog: CatalogItem[] = [
     publisher: "総務省",
     frequency: "月次",
     apiProvider: "estat",
-    apiAvailable: true,
+    apiAvailable: false,
     sourceUrl: "https://www.e-stat.go.jp/",
+    note: "e-Stat上のデータは全国集計のみで、都道府県・市区町村単位の値が存在しないため対象外（実データで確認済み）",
   },
   {
     id: "employment-security-statistics",
@@ -256,8 +263,9 @@ export const catalog: CatalogItem[] = [
     publisher: "総務省",
     frequency: "月次",
     apiProvider: "estat",
-    apiAvailable: true,
+    apiAvailable: false,
     sourceUrl: "https://www.e-stat.go.jp/",
+    note: "e-Stat上の統計表は地域コードでの取得に対応しておらず（都道府県庁所在市及び人口15万人以上の市のみが表内の列として存在）、市区町村コードでの一括取得はできないため対象外（実データで確認済み）",
   },
   {
     id: "cpi-regional-difference",

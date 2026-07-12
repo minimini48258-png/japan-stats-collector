@@ -36,19 +36,27 @@ function extractYear(surveyDate: string | number | undefined): number | null {
   return match ? Number(match[0]) : null;
 }
 
+function getTitle(t: Record<string, unknown>): string {
+  const title = t.TITLE as { $?: string } | string | undefined;
+  return typeof title === "string" ? title : title?.$ ?? "";
+}
+
 /**
- * itemName（例: "国勢調査"）をキーワードにe-Statの統計表を検索し、
- * 指定した地域コードのデータを持つ統計表の一覧を年別に返す。
+ * カタログ項目のe-Stat統計調査コード（STAT_NAME）をもとに統計表を検索し、
+ * 都道府県・市区町村単位で集計されている表だけに絞り込んで年別に返す。
+ *
+ * 実データで検証した結果、getStatsListの `cdArea` パラメータは絞り込みに効かず、
+ * かつ統計調査コードを指定しないと数千〜1万件近くヒットして非常に遅い（実測20秒超）。
+ * 一方、COLLECT_AREA（集計地域）フィールドで「市区町村」の表に絞ると
+ * 都道府県・市区町村どちらのcdAreaでも値が取得できることを確認済み。
  */
 export async function searchStatsTables(
-  searchWord: string,
-  areaCode: string
+  statsCode: string,
+  titleKeyword?: string
 ): Promise<StatsTable[]> {
   const params = new URLSearchParams({
     appId: getAppId(),
-    searchWord,
-    searchKind: "1",
-    cdArea: areaCode,
+    statsCode,
   });
   const res = await fetch(`${ESTAT_BASE}/getStatsList?${params.toString()}`);
   if (!res.ok) {
@@ -56,27 +64,27 @@ export async function searchStatsTables(
   }
   const json = await res.json();
   const result = json?.GET_STATS_LIST?.RESULT;
-  if (result && result["@status"] !== 0 && result["@status"] !== "0") {
-    throw new Error(`e-Stat API エラー: ${result["@errorMsg"] ?? "不明なエラー"}`);
+  if (result && result.STATUS !== 0 && result.STATUS !== "0") {
+    throw new Error(`e-Stat API エラー: ${result.ERROR_MSG ?? "不明なエラー"}`);
   }
 
   const rawList = json?.GET_STATS_LIST?.DATALIST_INF?.TABLE_INF;
   const list: unknown[] = Array.isArray(rawList) ? rawList : rawList ? [rawList] : [];
 
   return list
+    .filter((raw) => (raw as Record<string, unknown>).COLLECT_AREA === "市区町村")
     .map((raw): StatsTable => {
       const t = raw as Record<string, unknown>;
-      const title = t.TITLE as { $?: string } | string | undefined;
       return {
         statsDataId: String(t["@id"]),
         statisticsName: String(t.STATISTICS_NAME ?? ""),
-        title: typeof title === "string" ? title : title?.$ ?? "",
+        title: getTitle(t),
         cycle: String(t.CYCLE ?? ""),
         surveyDate: String(t.SURVEY_DATE ?? ""),
         year: extractYear(t.SURVEY_DATE as string | number | undefined),
       };
     })
-    .filter((t) => t.year !== null)
+    .filter((t) => t.year !== null && (!titleKeyword || t.title.includes(titleKeyword)))
     .sort((a, b) => (b.year ?? 0) - (a.year ?? 0));
 }
 
@@ -104,8 +112,8 @@ export async function fetchStatsData(
   }
   const json = await res.json();
   const result = json?.GET_STATS_DATA?.RESULT;
-  if (result && result["@status"] !== 0 && result["@status"] !== "0") {
-    throw new Error(`e-Stat API エラー: ${result["@errorMsg"] ?? "不明なエラー"}`);
+  if (result && result.STATUS !== 0 && result.STATUS !== "0") {
+    throw new Error(`e-Stat API エラー: ${result.ERROR_MSG ?? "不明なエラー"}`);
   }
 
   const statData = json?.GET_STATS_DATA?.STATISTICAL_DATA;

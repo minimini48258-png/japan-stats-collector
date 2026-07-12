@@ -27,6 +27,8 @@ jobs:
       - run: npm run build
         env:
           BASE_PATH: /japan-stats-collector
+          NEXT_PUBLIC_ESTAT_APP_ID: ${{ secrets.ESTAT_APP_ID }}
+          NEXT_PUBLIC_REINFOLIB_PROXY_BASE_URL: ${{ secrets.REINFOLIB_PROXY_BASE_URL }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: out

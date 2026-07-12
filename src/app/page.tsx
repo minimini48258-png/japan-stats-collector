@@ -85,9 +85,9 @@ export default function Home() {
       return;
     }
 
-    if (item.apiProvider === "estat") {
+    if (item.apiProvider === "estat" && item.estatStatsCode) {
       try {
-        const tables = await searchStatsTables(item.itemName, areaCode);
+        const tables = await searchStatsTables(item.estatStatsCode, item.estatTitleKeyword);
         setSelection((prev) => ({
           ...prev,
           [item.id]: { ...prev[item.id], loading: false, yearOptions: tables },
