@@ -9,11 +9,16 @@ export interface Env {
 }
 
 const DEV_ORIGINS = ["http://localhost:3411", "http://localhost:3000"];
+// shiso-lab-site（chips.jp）への本組み込みが完了するまでは、GitHub Pages版が
+// 唯一の公開先のため許可オリジンに含めておく
+const EXTRA_ALLOWED_ORIGINS = ["https://minimini48258-png.github.io"];
 
 function corsHeaders(env: Env, origin: string | null): HeadersInit {
-  const allowed = origin && (origin === env.ALLOWED_ORIGIN || DEV_ORIGINS.includes(origin))
-    ? origin
-    : env.ALLOWED_ORIGIN;
+  const allowed =
+    origin &&
+    (origin === env.ALLOWED_ORIGIN || DEV_ORIGINS.includes(origin) || EXTRA_ALLOWED_ORIGINS.includes(origin))
+      ? origin
+      : env.ALLOWED_ORIGIN;
   return {
     "Access-Control-Allow-Origin": allowed,
     "Access-Control-Allow-Methods": "GET, OPTIONS",
