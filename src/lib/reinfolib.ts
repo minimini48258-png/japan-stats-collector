@@ -33,6 +33,12 @@ function getProxyBase(): string {
   return base.replace(/\/$/, "");
 }
 
+/** "179,000(円/㎡)" のような表記から数値部分(179000)だけを取り出す */
+function parsePrice(value: unknown): number {
+  const digits = String(value ?? "").replace(/[^\d]/g, "");
+  return digits ? Number(digits) : NaN;
+}
+
 function lonLatToTile(lon: number, lat: number, zoom: number): { x: number; y: number } {
   const latRad = (lat * Math.PI) / 180;
   const n = 2 ** zoom;
@@ -158,7 +164,7 @@ export async function fetchLandPrice(
           prefecture: String(p.prefecture_name_ja ?? ""),
           city: String(p.city_county_name_ja ?? ""),
           address: String(p.location_number_ja ?? ""),
-          price: Number(p.u_current_years_price_ja ?? 0),
+          price: parsePrice(p.u_current_years_price_ja),
           year: String(p.target_year_name_ja ?? year),
           useCategory: String(p.use_category_name_ja ?? ""),
         });
